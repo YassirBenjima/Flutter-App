@@ -1,3 +1,12 @@
 const appname = "Boutika";
 const appversion = "Version 1.0.0";
 const credits = "@Yassir Benjima";
+const email = "Email";
+const emailHint = "admin@gmail.com";
+const password = "Password";
+const passwordHint = "********";
+const forgetPassword = "Forget Password";
+const login = "Log in";
+const signup = "Sign up";
+const createNewAccount = "Or, create a new account";
+const loginWith = "Log in with";

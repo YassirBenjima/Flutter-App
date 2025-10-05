@@ -1,6 +1,8 @@
 import 'package:boutika/consts/consts.dart';
+import 'package:boutika/views/auth_screen/login_screen.dart';
 import 'package:boutika/views/widgets_common/applogo_widget.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -10,6 +12,18 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
+  // Method to change screen
+  changeScreen() {
+    Future.delayed(const Duration(seconds: 3), () {
+      Get.to(() => const LoginScreen());
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    changeScreen();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +46,6 @@ class _SplashScreenState extends State<SplashScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Logo
               Container(
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
@@ -46,20 +59,14 @@ class _SplashScreenState extends State<SplashScreen> {
                 ),
                 child: applogoWidget(),
               ),
-              
               40.heightBox,
-              
-              // App name
               appname.text
                   .fontFamily(bold)
                   .size(28)
                   .color(whiteColor)
                   .letterSpacing(1.2)
                   .make(),
-              
               10.heightBox,
-              
-              // Decorative line
               Container(
                 width: 60,
                 height: 3,
@@ -70,10 +77,7 @@ class _SplashScreenState extends State<SplashScreen> {
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              
               15.heightBox,
-              
-              // App version
               appversion.text
                   .color(whiteColor.withOpacity(0.8))
                   .size(14)

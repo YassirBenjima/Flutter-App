@@ -1,10 +1,12 @@
 import 'package:boutika/consts/consts.dart';
 import 'package:boutika/consts/lists.dart';
+import 'package:boutika/views/auth/signup.dart';
 import 'package:boutika/views/widgets_common/applogo_widget.dart';
 import 'package:boutika/views/widgets_common/bg_widget.dart';
 import 'package:boutika/views/widgets_common/custom_textfield.dart';
 import 'package:boutika/views/widgets_common/our_button.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -45,7 +47,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   5.heightBox,
                   createNewAccount.text.color(fontGrey).make(),
                   5.heightBox,
-                  ourButton(color: golden,title: signup,textColor: whiteColor,onPress: (){}).box.width(context.screenWidth - 50).make(),
+                  ourButton(color: golden,title: signup,textColor: whiteColor,onPress: (){Get.to(()=>const SignupScreen());}).box.width(context.screenWidth - 50).make(),
                   10.heightBox,
                   loginWith.text.color(fontGrey).make(),
                   5.heightBox,

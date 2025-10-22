@@ -1,6 +1,6 @@
-import 'package:boutika/consts/consts.dart';
-import 'package:boutika/views/auth/login.dart';
-import 'package:boutika/views/widgets_common/applogo_widget.dart';
+import 'package:colearn/consts/consts.dart';
+import 'package:colearn/views/auth/login.dart';
+import 'package:colearn/views/widgets_common/applogo_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 

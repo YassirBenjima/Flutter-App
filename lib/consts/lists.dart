@@ -1,5 +1,5 @@
 
-import 'package:boutika/consts/consts.dart';
+import 'package:colearn/consts/consts.dart';
 
 const socialIconList = [
   icFacebookLogo,

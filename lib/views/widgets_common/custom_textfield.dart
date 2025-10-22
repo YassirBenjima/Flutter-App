@@ -1,4 +1,4 @@
-import 'package:boutika/consts/consts.dart';
+import 'package:colearn/consts/consts.dart';
 import 'package:flutter/material.dart';
 
 Widget customTextField({String? title, String? hint, controller}) {

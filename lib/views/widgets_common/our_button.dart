@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:boutika/consts/consts.dart';
+import 'package:colearn/consts/consts.dart';
 
 Widget ourButton({
   VoidCallback? onPress,

@@ -1,4 +1,4 @@
-package com.example.boutika
+package com.example.colearn
 
 import io.flutter.embedding.android.FlutterActivity
 

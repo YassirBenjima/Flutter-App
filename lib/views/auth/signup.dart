@@ -1,9 +1,9 @@
-import 'package:boutika/consts/consts.dart';
-import 'package:boutika/consts/lists.dart';
-import 'package:boutika/views/widgets_common/applogo_widget.dart';
-import 'package:boutika/views/widgets_common/bg_widget.dart';
-import 'package:boutika/views/widgets_common/custom_textfield.dart';
-import 'package:boutika/views/widgets_common/our_button.dart';
+import 'package:colearn/consts/consts.dart';
+import 'package:colearn/consts/lists.dart';
+import 'package:colearn/views/widgets_common/applogo_widget.dart';
+import 'package:colearn/views/widgets_common/bg_widget.dart';
+import 'package:colearn/views/widgets_common/custom_textfield.dart';
+import 'package:colearn/views/widgets_common/our_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:get/get.dart';
@@ -16,6 +16,8 @@ class SignupScreen extends StatefulWidget {
 }
 
 class _SignupScreenState extends State<SignupScreen> {
+  bool? isCheck = false;
+
   @override
   Widget build(BuildContext context) {
     return bgWidget(
@@ -49,16 +51,21 @@ class _SignupScreenState extends State<SignupScreen> {
                   Row(
                     children: [
                       Checkbox(
+                        activeColor: golden,
                         checkColor: blackColor,
-                        value: false,
-                        onChanged: (newValue) {},
+                        value: isCheck,
+                        onChanged: (newValue) {
+                          setState(() {
+                            isCheck = newValue;
+                          });
+                        },
                       ),
                       10.widthBox,
                       RichText(
                         text: const TextSpan(
                           children: [
-                            TextSpan( text: "I agree to the ", style: TextStyle( fontFamily: bold, color: fontGrey,),),
-                            TextSpan( text: termAndCond, style: TextStyle( fontFamily: bold, color: golden,),),
+                            TextSpan( text: "I agree to the ", style: TextStyle( fontFamily: regular, color: fontGrey,),),
+                            TextSpan( text: termAndCond, style: TextStyle( fontFamily: regular, color: golden,),),
                           ],
                         ),
                       ),

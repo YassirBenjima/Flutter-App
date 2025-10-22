@@ -1,10 +1,10 @@
-import 'package:boutika/consts/consts.dart';
-import 'package:boutika/consts/lists.dart';
-import 'package:boutika/views/auth/signup.dart';
-import 'package:boutika/views/widgets_common/applogo_widget.dart';
-import 'package:boutika/views/widgets_common/bg_widget.dart';
-import 'package:boutika/views/widgets_common/custom_textfield.dart';
-import 'package:boutika/views/widgets_common/our_button.dart';
+import 'package:colearn/consts/consts.dart';
+import 'package:colearn/consts/lists.dart';
+import 'package:colearn/views/auth/signup.dart';
+import 'package:colearn/views/widgets_common/applogo_widget.dart';
+import 'package:colearn/views/widgets_common/bg_widget.dart';
+import 'package:colearn/views/widgets_common/custom_textfield.dart';
+import 'package:colearn/views/widgets_common/our_button.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 

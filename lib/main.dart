@@ -1,4 +1,4 @@
-import 'package:boutika/views/splash/splash.dart';
+import 'package:colearn/views/splash/splash.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'consts/consts.dart';

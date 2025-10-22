@@ -1,6 +1,6 @@
-# boutika
+# CoLearn
 
-A new Flutter project.
+E-learning collaboratif avec IA générative.
 
 ## Getting Started
 

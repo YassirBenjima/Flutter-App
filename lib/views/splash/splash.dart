@@ -1,6 +1,7 @@
 import 'package:colearn/consts/consts.dart';
 import 'package:colearn/views/auth/login.dart';
 import 'package:colearn/views/widgets_common/applogo_widget.dart';
+import 'package:colearn/views/widgets_common/custom_spinner.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -27,65 +28,33 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.bottomCenter,
-            end: Alignment.topCenter,
-            colors: [
-              blackColor,
-              blackColor,
-              darkFontGrey,
-              blackColor,
-            ],
-            stops: [0.0, 0.3, 0.7, 1.0],
-          ),
-        ),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.white.withOpacity(0.3),
-                      blurRadius: 20,
-                      spreadRadius: 5,
-                    ),
-                  ],
-                ),
-                child: applogoWidget(),
+      return Scaffold(
+        backgroundColor: lightBlue, // Light blue background
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // App name in bold black text
+            Text(
+              appname.toString(),
+              style: const TextStyle(
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+                letterSpacing: 1.0,
               ),
-              40.heightBox,
-              appname.text
-                  .fontFamily(bold)
-                  .size(28)
-                  .color(whiteColor)
-                  .letterSpacing(1.2)
-                  .make(),
-              10.heightBox,
-              Container(
-                width: 60,
-                height: 3,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Colors.white, Colors.white.withOpacity(0.7)],
-                  ),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              15.heightBox,
-              appversion.text
-                  .color(whiteColor.withOpacity(0.8))
-                  .size(14)
-                  .make(),
-            ],
-          ),
+            ),
+            const SizedBox(height: 20),
+            // Custom animated spinner
+            CustomSpinner(
+              size: 30.0,
+              color: Colors.grey[600],
+              duration: const Duration(milliseconds: 1200),
+            ),
+          ],
         ),
       ),
     );
   }
 }
+

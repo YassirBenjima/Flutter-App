@@ -8,6 +8,7 @@ const Color whiteColor = Color.fromRGBO(255, 255, 255, 1);
 const Color lightGrey = Color.fromRGBO(239, 239, 239, 1);
 const Color blackColor = Color.fromRGBO(0, 0, 0, 1.0);
 const Color golden = Color.fromRGBO(255, 168, 0, 1);
+const Color lightBlue = Color(0xFF99CCFF);
 
 // Orange gradient colors for splash
 const Color orangeLight = Color(0xFFFFB74D);

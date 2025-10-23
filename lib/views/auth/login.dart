@@ -16,59 +16,133 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  bool _obscurePassword = true;
+
   @override
   Widget build(BuildContext context) {
-    return bgWidget(
-      child: Scaffold(
-        resizeToAvoidBottomInset: false,
-        body: Center(
+    return Scaffold(
+      backgroundColor: blackColor,
+      resizeToAvoidBottomInset: false,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20.0),
           child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              (context.screenHeight * 0.1).heightBox,
-              applogoWidget(),
-              15.heightBox,
-              "Log in to $appname".text.fontFamily(bold).white.size(25).make(),
-              10.heightBox,
-              Column(
-                children: [
-                  customTextField(hint: emailHint,title: email),
-                  10.heightBox,
-                  customTextField(hint: passwordHint,title: password),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton(
-                      onPressed: () {},
-                      child: forgetPassword.text.make(),
-                    ),
+              // Logo CoLearn en bleu clair
+              "CoLearn".text.color(lightBlue).fontWeight(FontWeight.bold).size(32).make(),
+              
+              40.heightBox,
+              
+              // Titre principal
+              "Connectez-vous à votre compte".text.color(whiteColor).fontWeight(FontWeight.bold).size(24).make(),
+              
+              40.heightBox,
+              
+              // Champ email
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: whiteColor, width: 1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: TextField(
+                  style: const TextStyle(color: whiteColor),
+                  decoration: InputDecoration(
+                    hintText: "Adresse e-mail (obligatoire)",
+                    hintStyle: TextStyle(color: fontGrey),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                   ),
-                  10.heightBox,
-                  // ourButton().box.width(context.screenWidth - 50).make(),
-                  ourButton(color: blackColor,title: login,textColor: whiteColor,onPress: (){}).box.width(context.screenWidth - 50).make(),
-                  5.heightBox,
-                  createNewAccount.text.color(fontGrey).make(),
-                  5.heightBox,
-                  ourButton(color: golden,title: signup,textColor: whiteColor,onPress: (){Get.to(()=>const SignupScreen());}).box.width(context.screenWidth - 50).make(),
-                  10.heightBox,
-                  loginWith.text.color(fontGrey).make(),
-                  5.heightBox,
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(
-                      2, (index) => Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: CircleAvatar(
-                          backgroundColor: lightGrey,
-                          radius: 25,
-                          child: Image.asset(
-                            socialIconList[index],
-                            width: 30,
-                          ),
-                        ),
+                ),
+              ),
+              
+              20.heightBox,
+              
+              // Champ mot de passe avec icône œil
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: whiteColor, width: 1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: TextField(
+                  obscureText: _obscurePassword,
+                  style: const TextStyle(color: whiteColor),
+                  decoration: InputDecoration(
+                    hintText: "Mot de passe (requis)",
+                    hintStyle: TextStyle(color: fontGrey),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                        color: fontGrey,
                       ),
+                      onPressed: () {
+                        setState(() {
+                          _obscurePassword = !_obscurePassword;
+                        });
+                      },
                     ),
                   ),
-                ],
-              ).box.white.rounded.padding(const EdgeInsets.all(16)).width(context.screenWidth - 70).shadowSm.make()
+                ),
+              ),
+              
+              20.heightBox,
+              
+              // Lien mot de passe oublié
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: () {},
+                  child: "Mot de passe oublié ?".text.color(lightBlue).make(),
+                ),
+              ),
+              
+              40.heightBox,
+              
+              // Bouton de connexion
+              Container(
+                width: double.infinity,
+                height: 50,
+                decoration: BoxDecoration(
+                  color: darkFontGrey,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: ElevatedButton(
+                  onPressed: () {},
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: darkFontGrey,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: "Connexion".text.color(whiteColor).fontWeight(FontWeight.bold).size(16).make(),
+                ),
+              ),
+              
+              20.heightBox,
+              
+              // Bouton d'inscription
+              Container(
+                width: double.infinity,
+                height: 50,
+                decoration: BoxDecoration(
+                  color: lightBlue,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: ElevatedButton(
+                  onPressed: () {
+                    Get.to(() => const SignupScreen());
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: lightBlue,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: "S'inscrire".text.color(whiteColor).fontWeight(FontWeight.bold).size(16).make(),
+                ),
+              ),
             ],
           ),
         ),

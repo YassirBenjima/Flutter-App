@@ -1,10 +1,13 @@
 import 'package:colearn/consts/consts.dart';
 import 'package:colearn/consts/lists.dart';
 import 'package:colearn/views/auth/signup.dart';
+import 'package:colearn/views/home/home.dart';
 import 'package:colearn/views/widgets_common/applogo_widget.dart';
 import 'package:colearn/views/widgets_common/bg_widget.dart';
 import 'package:colearn/views/widgets_common/custom_textfield.dart';
 import 'package:colearn/views/widgets_common/our_button.dart';
+import 'package:colearn/services/api_service.dart';
+import 'package:colearn/views/auth/forgot_password.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -17,6 +20,66 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   bool _obscurePassword = true;
+  bool _isLoading = false;
+  
+  // Contrôleurs pour les champs de texte
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
+  // Méthode pour gérer la connexion
+  Future<void> _handleLogin() async {
+    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Veuillez remplir tous les champs"),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+    
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final response = await ApiService.loginUser(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
+      
+      // Succès
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Connexion réussie!"),
+          backgroundColor: lightBlue,
+        ),
+      );
+      
+      // Redirection vers la HomePage
+      Get.to(() => const HomeScreen());
+      
+    } catch (e) {
+      // Erreur
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Erreur: ${e.toString()}"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,6 +109,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: TextField(
+                  controller: _emailController,
                   style: const TextStyle(color: whiteColor),
                   decoration: InputDecoration(
                     hintText: "Adresse e-mail (obligatoire)",
@@ -65,6 +129,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: TextField(
+                  controller: _passwordController,
                   obscureText: _obscurePassword,
                   style: const TextStyle(color: whiteColor),
                   decoration: InputDecoration(
@@ -93,7 +158,9 @@ class _LoginScreenState extends State<LoginScreen> {
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    Get.to(() => const ForgotPasswordScreen());
+                  },
                   child: "Mot de passe oublié ?".text.color(lightBlue).make(),
                 ),
               ),
@@ -105,18 +172,27 @@ class _LoginScreenState extends State<LoginScreen> {
                 width: double.infinity,
                 height: 50,
                 decoration: BoxDecoration(
-                  color: darkFontGrey,
+                  color: _isLoading ? darkFontGrey.withOpacity(0.5) : darkFontGrey,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: ElevatedButton(
-                  onPressed: () {},
+                  onPressed: _isLoading ? null : _handleLogin,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: darkFontGrey,
+                    backgroundColor: _isLoading ? darkFontGrey.withOpacity(0.5) : darkFontGrey,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  child: "Connexion".text.color(whiteColor).fontWeight(FontWeight.bold).size(16).make(),
+                  child: _isLoading 
+                    ? SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(whiteColor),
+                        ),
+                      )
+                    : "Connexion".text.color(whiteColor).fontWeight(FontWeight.bold).size(16).make(),
                 ),
               ),
               

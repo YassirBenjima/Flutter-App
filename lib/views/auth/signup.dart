@@ -1,10 +1,12 @@
 import 'package:colearn/consts/consts.dart';
 import 'package:colearn/consts/lists.dart';
 import 'package:colearn/views/auth/login.dart';
+import 'package:colearn/views/home/home.dart';
 import 'package:colearn/views/widgets_common/applogo_widget.dart';
 import 'package:colearn/views/widgets_common/bg_widget.dart';
 import 'package:colearn/views/widgets_common/custom_textfield.dart';
 import 'package:colearn/views/widgets_common/our_button.dart';
+import 'package:colearn/services/api_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:get/get.dart';
@@ -19,6 +21,7 @@ class SignupScreen extends StatefulWidget {
 class _SignupScreenState extends State<SignupScreen> {
   bool? isCheck = false;
   bool _obscurePassword = true;
+  bool _isLoading = false;
   
   // Contrôleurs pour les champs de texte
   final TextEditingController _nameController = TextEditingController();
@@ -31,6 +34,47 @@ class _SignupScreenState extends State<SignupScreen> {
            _emailController.text.isNotEmpty &&
            _passwordController.text.isNotEmpty &&
            isCheck == true;
+  }
+
+  // Méthode pour gérer l'inscription
+  Future<void> _handleRegistration() async {
+    if (!_isFormValid) return;
+    
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final response = await ApiService.registerUser(
+        fullName: _nameController.text.trim(),
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
+      
+      // Succès
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Compte créé avec succès!"),
+          backgroundColor: lightBlue,
+        ),
+      );
+      
+      // Redirection vers la HomePage
+      Get.to(() => const HomeScreen());
+      
+    } catch (e) {
+      // Erreur
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Erreur: ${e.toString()}"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   @override
@@ -211,26 +255,34 @@ class _SignupScreenState extends State<SignupScreen> {
                 width: double.infinity,
                 height: 50,
                 decoration: BoxDecoration(
-                  color: _isFormValid ? darkFontGrey : darkFontGrey.withOpacity(0.5),
+                  color: (_isFormValid && !_isLoading) ? darkFontGrey : darkFontGrey.withOpacity(0.5),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: ElevatedButton(
-                  onPressed: _isFormValid ? () {
-                  } : null,
+                  onPressed: (_isFormValid && !_isLoading) ? _handleRegistration : null,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: _isFormValid ? darkFontGrey : darkFontGrey.withOpacity(0.5),
+                    backgroundColor: (_isFormValid && !_isLoading) ? darkFontGrey : darkFontGrey.withOpacity(0.5),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  child: Text(
-                    "Créer un compte",
-                    style: TextStyle(
-                      color: _isFormValid ? whiteColor : whiteColor.withOpacity(0.5),
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  child: _isLoading 
+                    ? SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(whiteColor),
+                        ),
+                      )
+                    : Text(
+                        "Créer un compte",
+                        style: TextStyle(
+                          color: (_isFormValid && !_isLoading) ? whiteColor : whiteColor.withOpacity(0.5),
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                 ),
               ),
               

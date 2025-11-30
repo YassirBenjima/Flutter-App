@@ -1,0 +1,20 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "CoLearn (Web - Port 8080)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "args": ["--web-port=8080"]
+    },
+    {
+      "name": "CoLearn (Web - Port 8080 - Chrome)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "args": ["--web-port=8080", "-d", "chrome"]
+    }
+  ]
+}
+

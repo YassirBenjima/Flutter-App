@@ -206,7 +206,7 @@ CoLearn/
 1. **Cloner le dépôt** :
 
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/YassirBenjima/Flutter-App
    cd CoLearn/Backend
    ```
 
@@ -318,22 +318,6 @@ Modifier les constantes dans `CoLearn/lib/consts/consts.dart` ou créer un fichi
 1. **Gérer les utilisateurs** : Attribuer des rôles, modérer les comptes
 2. **Configurer la plateforme** : Paramétrer les services IA, les notifications
 3. **Monitorer** : Suivre les performances et l'utilisation de la plateforme
-
-## 👥 Équipe
-
-**Étudiants en Ingénierie Informatique et Réseaux (5IIR)** :
-
-- **Benjima Yassir**
-- **Benhida Oussama**
-- **Joudar Samia**
-- **Mahi Salma**
-- **Benrabiaa Ayman**
-
-**Encadrants** :
-
-- **Mme. Hanae Sbai**
-- **Mme. Halima Bousqaoui**
-- **M. Driss Essabbar**
 
 ## 📊 Performance et Exigences
 

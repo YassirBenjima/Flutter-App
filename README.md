@@ -212,7 +212,7 @@ CoLearn/
 
 2. **Configurer la base de données** :
 
-   - Créer une base de données MySQL nommée `colearn`
+   - Créer une base de données MySQL nommée `colearn_db`
    - Modifier `src/main/resources/application.properties` avec vos paramètres de connexion
 
 3. **Installer les dépendances** :

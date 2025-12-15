@@ -1,0 +1,367 @@
+package co.learn.app.controllers;
+
+import co.learn.app.entities.Course;
+import co.learn.app.entities.Module;
+import co.learn.app.repositories.CourseRepository;
+import co.learn.app.repositories.ModuleRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity; // Required
+import org.springframework.transaction.annotation.Transactional; // Required
+import org.springframework.web.bind.annotation.*;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+@RestController
+@RequestMapping("/api/courses")
+@CrossOrigin(origins = "*")
+public class CourseController {
+
+    @Autowired
+    private CourseRepository courseRepository;
+
+    @Autowired
+    private ModuleRepository moduleRepository;
+
+    @Autowired
+    private co.learn.app.repositories.UserRepository userRepository;
+
+    @Autowired
+    private co.learn.app.services.GeminiService geminiService;
+
+    @Autowired
+    private com.google.gson.Gson gson;
+
+    @PostMapping("/generate")
+    public ResponseEntity<?> generateCourse(@RequestBody Map<String, Object> request) {
+        String topic = (String) request.get("topic");
+        String lang = (String) request.get("language"); // "fr" or "en"
+        String level = (String) request.get("level");
+        Object userIdObj = request.get("userId");
+        Long userId = null;
+        if (userIdObj instanceof Number) {
+            userId = ((Number) userIdObj).longValue();
+        }
+
+        if (userId == null) {
+            return ResponseEntity.badRequest().body("User ID is required");
+        }
+
+        // 1. Construct the Prompt
+        String languageName = "fr".equalsIgnoreCase(lang) ? "French" : "English";
+        String prompt = String.format(
+                "Act as an expert tutor. Create a comprehensive course about '%s'.\n" +
+                        "TARGET AUDIENCE: Level '%s'.\n" +
+                        "LANGUAGE: The content MUST be in '%s'.\n" +
+                        "OUTPUT FORMAT: Return STRICTLY valid JSON (no markdown, no ```json fences).\n" +
+                        "IMPORTANT: If using backslashes in text (e.g. for LaTeX, paths, or code), you MUST double-escape them (e.g. use \\\\ instead of \\). Ensure all quotes are escaped properly.\n"
+                        +
+                        "Matches this structure:\n"
+                        +
+                        "{ \"title\": \"Course Title (in %s)\", \"description\": \"Engaging description (in %s)\", " +
+                        "\"modules\": [ " +
+                        "{ \"title\": \"Module 1 Title\", \"content\": \"Educational content matching level %s (min 200 words)...\" }, "
+                        +
+                        "{ \"title\": \"Module 2 Title\", \"content\": \"Detailed educational content (at least 200 words)...\" }, "
+                        +
+                        "{ \"title\": \"Module 3 Title\", \"content\": \"Deep dive...\" }, " +
+                        "{ \"title\": \"Quiz\", \"content\": \"Question 1: ... ?\\nOptions: ...\\nCorrect Answer: ...\" } "
+                        +
+                        "] }",
+                topic, level, languageName, languageName, languageName, level);
+
+        System.out.println("Generating course with prompt: " + prompt);
+
+        // 2. Call Gemini API
+        String jsonResponse = geminiService.generateContent(prompt);
+
+        // 3. Clean and Parse JSON
+        jsonResponse = jsonResponse.replace("```json", "").replace("```", "").trim();
+
+        try {
+            return ResponseEntity.ok(parseAndSaveCourse(jsonResponse, topic, level, lang, userId));
+        } catch (Exception e) {
+            System.err.println("First parse attempt failed: " + e.getMessage());
+            // Retry with aggressive sanitization
+            String sanitizedJson = sanitizeJson(jsonResponse);
+            try {
+                return ResponseEntity.ok(parseAndSaveCourse(sanitizedJson, topic, level, lang, userId));
+            } catch (Exception ex) {
+                System.err.println("Second parse attempt failed: " + ex.getMessage());
+                return ResponseEntity.internalServerError().body("Failed to generate course. Please try again.");
+            }
+        }
+    }
+
+    private String sanitizeJson(String json) {
+        // Replace single backslashes that are NOT followed by valid escape characters
+        // with double backslashes
+        // Valid JSON escapes: " \ / b f n r t u
+        // This regex looks for \ followed by anything NOT in ["\\/bfnrtu]
+        return json.replaceAll("\\\\(?![\\\\\"/bfnrtu])", "\\\\\\\\");
+    }
+
+    private Course parseAndSaveCourse(String jsonResponse, String topic, String level, String lang, Long userId) {
+        Map<String, Object> data = gson.fromJson(jsonResponse, Map.class);
+
+        Course course = new Course();
+        course.setTitle((String) data.getOrDefault("title", topic));
+        course.setDescription((String) data.getOrDefault("description", "Generated by AI"));
+        course.setLevel(level);
+        course.setLanguage(lang);
+        course.setIcon("school");
+        course.setAiGenerated(true);
+
+        // Link to user
+        userRepository.findById(userId).ifPresent(course::setCreator);
+
+        List<Module> modules = new ArrayList<>();
+        List<Map<String, String>> modulesData = (List<Map<String, String>>) data.get("modules");
+
+        if (modulesData != null) {
+            for (int i = 0; i < modulesData.size(); i++) {
+                Map<String, String> mData = modulesData.get(i);
+                Module module = new Module();
+                module.setTitle(mData.get("title"));
+                module.setContent(mData.get("content"));
+
+                // Unlock FIRST module only
+                module.setLocked(i != 0);
+
+                modules.add(module);
+            }
+        }
+
+        course.setModules(modules);
+        return courseRepository.save(course);
+    }
+
+    @GetMapping
+    public List<Course> getUserCourses(@RequestParam(required = false) Long userId) {
+        if (userId != null) {
+            return courseRepository.findByCreator_Id(userId);
+        }
+        return new ArrayList<>(); // Or return all if admin? For now restricted.
+    }
+
+    // --- INSTRUCTOR ENDPOINTS ---
+
+    @GetMapping("/instructor")
+    public List<Course> getInstructorCourses() {
+        return courseRepository.findByCreator_Role("FORMATEUR");
+    }
+
+    @PostMapping("/manual")
+    public ResponseEntity<?> createManualCourse(@RequestBody Map<String, Object> payload) {
+        try {
+            String title = (String) payload.get("title");
+            String description = (String) payload.get("description");
+            String level = (String) payload.get("level");
+            String language = (String) payload.get("language");
+            String category = (String) payload.getOrDefault("category", "Général"); // Default if missing
+            Long userId = ((Number) payload.get("userId")).longValue();
+
+            Course course = new Course();
+            course.setTitle(title);
+            course.setDescription(description);
+            course.setLevel(level);
+            course.setLanguage(language);
+            course.setCategory(category);
+            course.setIcon("school");
+
+            userRepository.findById(userId).ifPresent(course::setCreator);
+
+            List<Module> modules = new ArrayList<>();
+            List<Map<String, String>> modulesData = (List<Map<String, String>>) payload.get("modules");
+
+            if (modulesData != null) {
+                for (int i = 0; i < modulesData.size(); i++) {
+                    Map<String, String> mData = modulesData.get(i);
+                    Module module = new Module();
+                    module.setTitle(mData.get("title"));
+                    module.setContent(mData.get("content"));
+                    module.setVideoUrl(mData.get("videoUrl")); // FIX: Map videoUrl
+                    module.setLocked(i != 0); // Lock all except first
+                    modules.add(module);
+                }
+            }
+            course.setModules(modules);
+
+            return ResponseEntity.ok(courseRepository.save(course));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Error creating course: " + e.getMessage());
+        }
+    }
+
+    // --- FIX: SAVING PROGRESS ---
+    @PutMapping("/modules/{id}/unlock")
+    @Transactional // Forces DB to save the change
+    public ResponseEntity<?> unlockModule(@PathVariable Long id) {
+        System.out.println(">>> SAVING: Unlocking Module ID " + id);
+
+        return moduleRepository.findById(id).map(module -> {
+            module.setLocked(false); // Unlock it
+            moduleRepository.save(module); // Save it
+            return ResponseEntity.ok().build();
+        }).orElseGet(() -> {
+            return ResponseEntity.notFound().build();
+        });
+    }
+
+    @PutMapping("/{id}/complete")
+    @Transactional
+    public ResponseEntity<?> markCourseCompleted(@PathVariable Long id) {
+        System.out.println(">>> SAVING: Completing Course ID " + id);
+        return courseRepository.findById(id).map(course -> {
+            course.setCompleted(true);
+            courseRepository.save(course);
+
+            // --- GAMIFICATION REWARD ---
+            // --- GAMIFICATION REWARD ---
+            // Only award XP/Badges if NOT AI generated
+            if (!course.isAiGenerated()) {
+                co.learn.app.entities.User student = course.getCreator();
+                if (student != null) {
+                    // Award XP
+                    student.setXp(student.getXp() + 500);
+                    System.out.println("   +500 XP for User " + student.getId());
+
+                    // Award Badge: "First Course"
+                    // Check if this is their first completed course
+                    long completedCount = courseRepository.findByCreator_Id(student.getId()).stream()
+                            .filter(Course::isCompleted).count();
+                    if (completedCount == 1) { // 1 means this is the first one (since we just set it true)
+                        student.getBadges().add("Premier Cours 🏆");
+                        System.out.println("   +Badge Awarded: Premier Cours 🏆");
+                    }
+
+                    userRepository.save(student);
+                }
+            } else {
+                System.out.println("   --- AI Course: No XP/Badges awarded ---");
+            }
+            // ---------------------------
+            // ---------------------------
+
+            return ResponseEntity.ok().build();
+        }).orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    // --- ENROLLMENT (CLONING) ---
+    @PostMapping("/{id}/enroll")
+    @Transactional
+    public ResponseEntity<?> enrollCourse(@PathVariable Long id, @RequestBody Map<String, Long> payload) {
+        Long userId = payload.get("userId");
+        if (userId == null)
+            return ResponseEntity.badRequest().body("userId required");
+
+        // CHECK IF ALREADY ENROLLED
+        Course existingEnrollment = courseRepository.findByCreator_IdAndOriginalCourseId(userId, id);
+        if (existingEnrollment != null) {
+            System.out
+                    .println("ℹ️ User " + userId + " already enrolled in Course " + id + ". Returning existing copy.");
+            return ResponseEntity.ok(existingEnrollment);
+        }
+
+        return courseRepository.findById(id).map(originalCourse -> {
+            // 0. Update Stats on Original Course
+            originalCourse.setEnrolledCount(originalCourse.getEnrolledCount() + 1);
+            courseRepository.save(originalCourse);
+
+            // 1. Clone Course
+            Course newCourse = new Course();
+            newCourse.setTitle(originalCourse.getTitle());
+            newCourse.setDescription(originalCourse.getDescription());
+            newCourse.setLanguage(originalCourse.getLanguage());
+            newCourse.setLevel(originalCourse.getLevel());
+            newCourse.setIcon(originalCourse.getIcon());
+            newCourse.setCategory(originalCourse.getCategory());
+            newCourse.setCompleted(false); // Reset completion
+
+            // Link to parent for aggregation
+            newCourse.setOriginalCourseId(originalCourse.getId());
+
+            // 2. Assign to Student
+            // The student "owns" this progress copy
+            userRepository.findById(userId).ifPresent(newCourse::setCreator);
+
+            // PRESERVE ORIGINAL FORMATEUR (fixes messaging issue)
+            if (originalCourse.getOriginalCreator() != null) {
+                newCourse.setOriginalCreator(originalCourse.getOriginalCreator());
+            } else {
+                newCourse.setOriginalCreator(originalCourse.getCreator());
+            }
+
+            // 3. Clone Modules
+            List<Module> newModules = new ArrayList<>();
+            List<Module> originalModules = originalCourse.getModules();
+
+            if (originalModules != null) {
+                for (int i = 0; i < originalModules.size(); i++) {
+                    Module originalModule = originalModules.get(i);
+                    Module newModule = new Module();
+                    newModule.setTitle(originalModule.getTitle());
+                    newModule.setContent(originalModule.getContent());
+                    newModule.setVideoUrl(originalModule.getVideoUrl()); // Fix: Copy video URL
+                    newModule.setLocked(i != 0); // Reset progress: Lock all except first
+                    newModules.add(newModule);
+                }
+            }
+            newCourse.setModules(newModules);
+
+            // 4. Save and Return
+            Course savedCourse = courseRepository.save(newCourse);
+            return ResponseEntity.ok(savedCourse);
+        }).orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    // --- RATING ---
+    @PostMapping("/{id}/rate")
+    @Transactional
+    public ResponseEntity<?> rateCourse(@PathVariable Long id, @RequestBody Map<String, Double> payload) {
+        Double rating = payload.get("rating");
+        if (rating == null || rating < 0 || rating > 5) {
+            return ResponseEntity.badRequest().body("Invalid rating");
+        }
+
+        return courseRepository.findById(id).map(course -> {
+            // Identify the "Parent" course to rate
+            Course targetCourse = course;
+            if (course.getOriginalCourseId() != null) {
+                targetCourse = courseRepository.findById(course.getOriginalCourseId()).orElse(course);
+            }
+
+            // Update Stats
+            // (Average * Count + New) / (Count + 1)
+            double currentSum = targetCourse.getAverageRating() * targetCourse.getRatingCount();
+            double newSum = currentSum + rating;
+            int newCount = targetCourse.getRatingCount() + 1;
+
+            double newAverage = newSum / newCount;
+
+            targetCourse.setAverageRating(newAverage);
+            targetCourse.setRatingCount(newCount);
+
+            courseRepository.save(targetCourse);
+            // Return updated average
+            return ResponseEntity.ok(Map.of("newAverage", newAverage));
+        }).orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    // --- DELETE COURSE ---
+    @DeleteMapping("/{id}")
+    @Transactional
+    public ResponseEntity<?> deleteCourse(@PathVariable Long id) {
+        return courseRepository.findById(id).map(course -> {
+            courseRepository.delete(course); // Cascades to modules due to CascadeType.ALL
+            return ResponseEntity.ok().build();
+        }).orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    // --- SEARCH ---
+    @GetMapping("/search")
+    public List<Course> searchCourses(@RequestParam String query) {
+        return courseRepository.findByTitleContainingIgnoreCaseAndOriginalCourseIdIsNull(query);
+    }
+}

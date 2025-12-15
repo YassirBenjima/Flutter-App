@@ -1,6 +1,6 @@
 import 'package:colearn/consts/consts.dart';
 import 'package:colearn/views/auth/login.dart';
-import 'package:colearn/views/widgets_common/applogo_widget.dart';
+// Removed unused applogo import
 import 'package:colearn/views/widgets_common/custom_spinner.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -13,10 +13,13 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
+
   // Method to change screen
   changeScreen() {
     Future.delayed(const Duration(seconds: 3), () {
-      Get.to(() => const LoginScreen());
+      // FIX: Use Get.off() instead of Get.to()
+      // This removes the SplashScreen from the back stack so the user cannot return to it.
+      Get.off(() => const LoginScreen());
     });
   }
 
@@ -28,15 +31,15 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
-      return Scaffold(
-        backgroundColor: lightBlue, // Light blue background
+    return Scaffold(
+      backgroundColor: lightBlue, // Ensure this color is defined in consts.dart
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // App name in bold black text
+            // App Name
             Text(
-              appname.toString(),
+              appname, // Removed .toString() as appname is usually already a string
               style: const TextStyle(
                 fontSize: 32,
                 fontWeight: FontWeight.bold,
@@ -45,7 +48,7 @@ class _SplashScreenState extends State<SplashScreen> {
               ),
             ),
             const SizedBox(height: 20),
-            // Custom animated spinner
+            // Custom Spinner
             CustomSpinner(
               size: 30.0,
               color: Colors.grey[600],
@@ -57,4 +60,3 @@ class _SplashScreenState extends State<SplashScreen> {
     );
   }
 }
-

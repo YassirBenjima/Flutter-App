@@ -1,14 +1,12 @@
 import 'package:colearn/consts/consts.dart';
-import 'package:colearn/consts/lists.dart';
 import 'package:colearn/views/auth/signup.dart';
 import 'package:colearn/views/home/home.dart';
+import 'package:colearn/views/admin/admin_dashboard.dart'; // Import Admin Dashboard
 import 'package:colearn/views/widgets_common/applogo_widget.dart';
 import 'package:colearn/views/widgets_common/bg_widget.dart';
 import 'package:colearn/views/widgets_common/custom_textfield.dart';
 import 'package:colearn/views/widgets_common/our_button.dart';
 import 'package:colearn/services/api_service.dart';
-import 'package:colearn/services/oauth_service.dart';
-import 'package:colearn/views/auth/forgot_password.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -20,72 +18,51 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  bool _obscurePassword = true;
   bool _isLoading = false;
-  
-  // Contrôleurs pour les champs de texte
+
+  // Controllers
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
-  // Méthode pour gérer la connexion
   Future<void> _handleLogin() async {
     if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Veuillez remplir tous les champs"),
-          backgroundColor: Colors.red,
-        ),
-      );
+      Get.snackbar("Erreur", "Veuillez remplir tous les champs", backgroundColor: Colors.red, colorText: Colors.white);
       return;
     }
-    
-    setState(() {
-      _isLoading = true;
-    });
+
+    setState(() => _isLoading = true);
 
     try {
-      final response = await ApiService.loginUser(
+      final responseData = await ApiService.loginUser(
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
-      
-      // Succès
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Connexion réussie!"),
-          backgroundColor: lightBlue,
-        ),
-      );
-      
-      // Redirection vers la HomePage
-      Get.to(() => const HomeScreen());
-      
-    } catch (e) {
-      // Erreur
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Erreur: ${e.toString()}"),
-          backgroundColor: Colors.red,
-        ),
-      );
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
-    }
-  }
 
-  @override
-  void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
-    super.dispose();
+      // --- DEBUG PRINT (Check your console to see what role arrives) ---
+      print("User Data from Backend: $responseData");
+
+      // --- LOGIC TO CHECK ROLE ---
+      String role = responseData['role'] ?? 'APPRENANT'; // Default to Learner if null
+
+      if (role == 'ADMIN') {
+        Get.offAll(() => const AdminDashboard()); // Go to Admin Panel
+      } else {
+        Get.offAll(() => const HomeScreen()); // Go to Normal App
+      }
+
+      Get.snackbar("Succès", "Bienvenue ${responseData['fullName']}", backgroundColor: lightBlue, colorText: whiteColor);
+
+    } catch (e) {
+      Get.snackbar("Erreur", "Email ou mot de passe incorrect", backgroundColor: Colors.red, colorText: whiteColor);
+    } finally {
+      setState(() => _isLoading = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: blackColor,
+      backgroundColor: Colors.black, // Dark theme
       resizeToAvoidBottomInset: false,
       body: SafeArea(
         child: Padding(
@@ -93,174 +70,107 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Logo CoLearn en bleu clair
-              "CoLearn".text.color(lightBlue).fontWeight(FontWeight.bold).size(32).make(),
-              
+              // Logo
+              Text("CoLearn", style: TextStyle(color: lightBlue, fontSize: 32, fontWeight: FontWeight.bold)),
               40.heightBox,
-              
-              // Titre principal
-              "Connectez-vous à votre compte".text.color(whiteColor).fontWeight(FontWeight.bold).size(24).make(),
-              
+
+              Text("Connectez-vous à votre compte", style: TextStyle(color: whiteColor, fontSize: 18, fontWeight: FontWeight.bold)),
               40.heightBox,
-              
-              // Champ email
+
+              // Email Field
               Container(
                 decoration: BoxDecoration(
-                  border: Border.all(color: whiteColor, width: 1),
+                  border: Border.all(color: whiteColor),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: TextField(
                   controller: _emailController,
-                  style: const TextStyle(color: whiteColor),
-                  decoration: InputDecoration(
-                    hintText: "Adresse e-mail (obligatoire)",
-                    hintStyle: TextStyle(color: fontGrey),
+                  style: const TextStyle(color: Colors.white),
+                  decoration: const InputDecoration(
+                    hintText: "Email",
+                    hintStyle: TextStyle(color: Colors.grey),
                     border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    contentPadding: EdgeInsets.all(16),
                   ),
                 ),
               ),
-              
               20.heightBox,
-              
-              // Champ mot de passe avec icône œil
+
+              // Password Field
               Container(
                 decoration: BoxDecoration(
-                  border: Border.all(color: whiteColor, width: 1),
+                  border: Border.all(color: whiteColor),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: TextField(
                   controller: _passwordController,
-                  obscureText: _obscurePassword,
-                  style: const TextStyle(color: whiteColor),
-                  decoration: InputDecoration(
-                    hintText: "Mot de passe (requis)",
-                    hintStyle: TextStyle(color: fontGrey),
+                  obscureText: true,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: const InputDecoration(
+                    hintText: "Mot de passe",
+                    hintStyle: TextStyle(color: Colors.grey),
                     border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                        color: fontGrey,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _obscurePassword = !_obscurePassword;
-                        });
-                      },
-                    ),
+                    contentPadding: EdgeInsets.all(16),
                   ),
                 ),
               ),
-              
-              20.heightBox,
-              
-              // Lien mot de passe oublié
+
+              10.heightBox,
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton(
-                  onPressed: () {
-                    Get.to(() => const ForgotPasswordScreen());
-                  },
-                  child: "Mot de passe oublié ?".text.color(lightBlue).make(),
+                    onPressed: () {}, // Add Forgot Password logic if needed
+                    child: const Text("Mot de passe oublié ?", style: TextStyle(color: Colors.blue))
                 ),
               ),
-              
-              40.heightBox,
-              
-              // Bouton de connexion
-              Container(
+
+              20.heightBox,
+
+              // Login Button
+              SizedBox(
                 width: double.infinity,
                 height: 50,
-                decoration: BoxDecoration(
-                  color: _isLoading ? darkFontGrey.withOpacity(0.5) : darkFontGrey,
-                  borderRadius: BorderRadius.circular(8),
-                ),
                 child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: lightBlue),
                   onPressed: _isLoading ? null : _handleLogin,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _isLoading ? darkFontGrey.withOpacity(0.5) : darkFontGrey,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  child: _isLoading 
-                    ? SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(whiteColor),
-                        ),
-                      )
-                    : "Connexion".text.color(whiteColor).fontWeight(FontWeight.bold).size(16).make(),
+                  child: _isLoading
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text("Connexion", style: TextStyle(color: Colors.white, fontSize: 16)),
                 ),
               ),
-              
+
               20.heightBox,
-              
-              // Séparateur
-              Row(
-                children: [
-                  Expanded(child: Divider(color: fontGrey, thickness: 1)),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: "OU".text.color(fontGrey).size(14).make(),
-                  ),
-                  Expanded(child: Divider(color: fontGrey, thickness: 1)),
-                ],
-              ),
-              
+              const Text("OU", style: TextStyle(color: Colors.grey)),
               20.heightBox,
-              
-              // Bouton Google
-              Container(
+
+              // Google Button (Fake)
+              SizedBox(
                 width: double.infinity,
                 height: 50,
-                decoration: BoxDecoration(
-                  border: Border.all(color: whiteColor, width: 1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: ElevatedButton.icon(
-                  onPressed: _isLoading ? null : _handleGoogleLogin,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.transparent,
-                    shadowColor: Colors.transparent,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
+                child: OutlinedButton(
+                  style: OutlinedButton.styleFrom(side: const BorderSide(color: Colors.white)),
+                  onPressed: () {},
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.g_mobiledata, color: Colors.white),
+                      const SizedBox(width: 10),
+                      const Text("Continuer avec Google", style: TextStyle(color: Colors.white)),
+                    ],
                   ),
-                  icon: Image.asset(
-                    'assets/icons/google_logo.png',
-                    height: 24,
-                    width: 24,
-                    errorBuilder: (context, error, stackTrace) => Icon(Icons.g_mobiledata, color: whiteColor),
-                  ),
-                  label: "Continuer avec Google".text.color(whiteColor).fontWeight(FontWeight.bold).size(16).make(),
                 ),
               ),
-              
+
               20.heightBox,
-              
-              // Bouton d'inscription
-              Container(
+
+              // Signup Link
+              SizedBox(
                 width: double.infinity,
                 height: 50,
-                decoration: BoxDecoration(
-                  color: lightBlue,
-                  borderRadius: BorderRadius.circular(8),
-                ),
                 child: ElevatedButton(
-                  onPressed: () {
-                    Get.to(() => const SignupScreen());
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: lightBlue,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  child: "S'inscrire".text.color(whiteColor).fontWeight(FontWeight.bold).size(16).make(),
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.blueAccent),
+                  onPressed: () => Get.to(() => const SignupScreen()),
+                  child: const Text("S'inscrire", style: TextStyle(color: Colors.white)),
                 ),
               ),
             ],
@@ -269,48 +179,4 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
-  
-  // Méthode pour gérer la connexion Google
-  Future<void> _handleGoogleLogin() async {
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      final googleAuth = await OAuthFlutterService.signInWithGoogle();
-      if (googleAuth == null) {
-        setState(() {
-          _isLoading = false;
-        });
-        return; // User cancelled
-      }
-
-      final response = await ApiService.loginWithGoogle(
-        idToken: googleAuth['idToken'] as String,
-      );
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Connexion réussie avec Google!"),
-          backgroundColor: lightBlue,
-        ),
-      );
-      
-      Get.to(() => const HomeScreen());
-      
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Erreur Google: ${e.toString()}"),
-          backgroundColor: Colors.red,
-        ),
-      );
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
-    }
-  }
-  
 }
-
